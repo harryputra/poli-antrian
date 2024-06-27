@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antrian Poli</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .queue { font-size: 2em; }
+    </style>
+</head>
+<body>
+    <h1>Antrian Poli</h1>
+    <div id="poliName"></div>
+    <div class="queue" id="queueNumber">0</div>
+    <button onclick="previous()">Previous</button>
+    <button onclick="next()">Next</button>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const poliName = 'poli gigi'; // Ganti sesuai nama poli
+
+        async function fetchQueue() {
+            const response = await fetch(`/api/queue/${poliName}`);
+            const queue = await response.json();
+            document.getElementById('queueNumber').innerText = queue.currentNumber;
+        }
+
+        async function next() {
+            await fetch('/api/queue/next', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ poliName })
+            });
+            fetchQueue();
+        }
+
+        async function previous() {
+            await fetch('/api/queue/previous', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ poliName })
+            });
+            fetchQueue();
+        }
+
+        socket.on('queueUpdated', () => {
+            fetchQueue();
+        });
+
+        fetchQueue();
+    </script>
+</body>
+</html>

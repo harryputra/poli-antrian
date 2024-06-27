@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petugas Poli</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Petugas Poli</h1>
+    <div>
+        <label for="poliSelect">Pilih Poli:</label>
+        <select id="poliSelect"></select>
+    </div>
+    <div>
+        <h2 id="poliName">Poli</h2>
+        <h3>Nomor Antrian Saat Ini: <span id="currentNumber">0</span></h3>
+        <button onclick="previous()">Previous</button>
+        <button onclick="next()">Next</button>
+    </div>
+    <script>
+        const socket = io();
+
+        async function fetchPolis() {
+            try {
+                const response = await fetch('/api/poli');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch polis');
+                }
+                const polis = await response.json();
+                const poliSelect = document.getElementById('poliSelect');
+                poliSelect.innerHTML = '';
+                polis.forEach(poli => {
+                    const option = document.createElement('option');
+                    option.value = poli.name;
+                    option.textContent = poli.name;
+                    poliSelect.appendChild(option);
+                });
+                if (polis.length > 0) {
+                    poliSelect.value = polis[0].name;
+                    fetchQueue(polis[0].name);
+                }
+            } catch (error) {
+                console.error('Error fetching polis:', error.message);
+            }
+        }
+
+        async function fetchQueue(poliName) {
+            try {
+                const response = await fetch(`/api/queue/${poliName}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch queue');
+                }
+                const queue = await response.json();
+                document.getElementById('poliName').innerText = queue.poliName;
+                document.getElementById('currentNumber').innerText = queue.currentNumber;
+            } catch (error) {
+                console.error('Error fetching queue:', error.message);
+            }
+        }
+
+        async function next() {
+            const poliName = document.getElementById('poliSelect').value;
+            try {
+                const response = await fetch('/api/queue/next', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ poliName })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to update queue');
+                }
+                socket.emit('updateQueue');
+                fetchQueue(poliName);
+            } catch (error) {
+                console.error('Error updating queue:', error.message);
+            }
+        }
+
+        async function previous() {
+            const poliName = document.getElementById('poliSelect').value;
+            try {
+                const response = await fetch('/api/queue/previous', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ poliName })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to update queue');
+                }
+                socket.emit('updateQueue');
+                fetchQueue(poliName);
+            } catch (error) {
+                console.error('Error updating queue:', error.message);
+            }
+        }
+
+        socket.on('queueUpdated', () => {
+            const poliName = document.getElementById('poliSelect').value;
+            fetchQueue(poliName);
+        });
+
+        document.getElementById('poliSelect').addEventListener('change', (event) => {
+            fetchQueue(event.target.value);
+        });
+
+        fetchPolis();
+    </script>
+</body>
+</html>

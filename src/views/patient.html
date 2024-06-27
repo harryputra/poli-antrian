@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pasien</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Pasien</h1>
+    <div id="queues"></div>
+    <script>
+        const socket = io();
+
+        async function fetchQueues() {
+            try {
+                const response = await fetch('/api/queue');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch queues');
+                }
+                const queues = await response.json();
+                const queueContainer = document.getElementById('queues');
+                queueContainer.innerHTML = '';
+                queues.forEach(queue => {
+                    const queueDiv = document.createElement('div');
+                    queueDiv.innerHTML = `<h2>${queue.poliName}</h2><h3>Nomor Antrian Saat Ini: <span>${queue.currentNumber}</span></h3>`;
+                    queueContainer.appendChild(queueDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching queues:', error.message);
+            }
+        }
+
+        socket.on('queueUpdated', () => {
+            fetchQueues();
+        });
+
+        fetchQueues();
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambah Poli</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <h1>Tambah Poli</h1>
+    <form id="addPoliForm">
+        <label for="poliName">Nama Poli:</label>
+        <input type="text" id="poliName" name="poliName" required>
+        <button type="submit">Tambah</button>
+    </form>
+    <script>
+        document.getElementById('addPoliForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const poliName = document.getElementById('poliName').value;
+
+            try {
+                const response = await fetch('/api/poli', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: poliName })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to add poli');
+                }
+                alert('Poli berhasil ditambahkan');
+                document.getElementById('poliName').value = ''; // clear input field
+            } catch (error) {
+                console.error('Error adding poli:', error.message);
+                alert('Error adding poli');
+            }
+        });
+    </script>
+</body>
+</html>
